@@ -1,23 +1,29 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IActivityEvent extends Document {
+export interface ActivityEventDocument extends Document {
   eventId: string;
+  eventType: "attempt.succeeded" | "attempt.rejected";
   tenantId: string;
   studentId?: string;
-  eventType: "attempt.succeeded" | "attempt.rejected";
-  assessmentId?: string;
   attemptId?: string;
   requestId: string;
   occurredAt: Date;
-  metadata?: Record<string, unknown>;
+  metadata: Record<string, unknown>;
 }
 
-const activityEventSchema = new Schema<IActivityEvent>(
+const activityEventSchema = new Schema<ActivityEventDocument>(
   {
     eventId: {
       type: String,
       required: true,
       unique: true,
+      index: true,
+    },
+
+    eventType: {
+      type: String,
+      required: true,
+      enum: ["attempt.succeeded", "attempt.rejected"],
       index: true,
     },
 
@@ -32,18 +38,9 @@ const activityEventSchema = new Schema<IActivityEvent>(
       index: true,
     },
 
-    eventType: {
-      type: String,
-      enum: ["attempt.succeeded", "attempt.rejected"],
-      required: true,
-    },
-
-    assessmentId: {
-      type: String,
-    },
-
     attemptId: {
       type: String,
+      index: true,
     },
 
     requestId: {
@@ -66,16 +63,16 @@ const activityEventSchema = new Schema<IActivityEvent>(
   },
   {
     versionKey: false,
-    collection: "activity_events",
   }
 );
 
 activityEventSchema.index({
   tenantId: 1,
+  studentId: 1,
   occurredAt: -1,
 });
 
-export const ActivityEvent = mongoose.model<IActivityEvent>(
+export const ActivityEvent = mongoose.model<ActivityEventDocument>(
   "ActivityEvent",
   activityEventSchema
 );
